@@ -1,0 +1,1590 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Design tokens
+   ----------------------------------------------------------------------------
+   One accent, used only for things that are live: the signal travelling
+   through a system diagram, the active step, focus, the clock. If something
+   is amber it is either moving or selected. Everything else is charcoal,
+   warm white and two greys.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Scroll and pointer values written by lib/motion.ts. Registered as
+   non-inheriting so a change restyles only the element that holds it. */
+@property --p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0.5;
+}
+@property --e {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --pin {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --px {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --py {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --x {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --g {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --st {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --r {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --k {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+/* static: emit every token, including ones only read through var() */
+@theme static {
+  /* Colour */
+  --color-ink: #121211; /* page ground, warm charcoal */
+  --color-ink-2: #191917; /* raised surfaces */
+  --color-ink-3: #22221f; /* hover fills, wells */
+  --color-paper: #ece7dd; /* primary text, warm white */
+  --color-mute: #9a958c; /* secondary text, 6.2:1 on ink */
+  --color-faint: #827e75; /* tertiary text, 4.6:1 on ink */
+  --color-line: rgb(236 231 221 / 0.11); /* hairlines */
+  --color-line-strong: rgb(236 231 221 / 0.22);
+  --color-signal: #e9b44c; /* the one accent: live state only */
+  --color-signal-dim: rgb(233 180 76 / 0.16);
+
+  /* Type */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-hero: clamp(3.5rem, min(16vw, 4rem + 10vw, 19svh), 14rem);
+  --text-hero--line-height: 0.88;
+  --text-hero--letter-spacing: -0.055em;
+  --text-display: clamp(2.6rem, 7.2vw, 7.25rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.045em;
+  --text-title: clamp(1.9rem, 3.6vw, 3.25rem);
+  --text-title--line-height: 1.02;
+  --text-title--letter-spacing: -0.035em;
+  --text-lede: clamp(1.15rem, 1.5vw, 1.4rem);
+  --text-lede--line-height: 1.45;
+  --text-lede--letter-spacing: -0.012em;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.5;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.06em;
+
+  /* Radius: small for controls, medium for panels, large only for media */
+  --radius-ctl: 999px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Shadow: only floating layers (palette, cursor preview) cast one */
+  --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(236 231 221 / 0.08);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 160ms;
+  --duration-base: 420ms;
+  --duration-slow: 900ms;
+
+  /* Breakpoints (Tailwind defaults kept, one added for very wide screens) */
+  --breakpoint-3xl: 112rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+@layer base {
+  html {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Grain: a fixed, non-interactive noise layer over everything
+   ------------------------------------------------------------------------- */
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ---------------------------------------------------------------------------
+   Motion primitives. Everything here is opt-in by class and switched off by
+   prefers-reduced-motion, so the static page is the complete page.
+   ------------------------------------------------------------------------- */
+
+/* Hero lines rise out of a mask, once, on load */
+.rise-mask {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
+}
+.rise {
+  display: block;
+  transform: translateY(105%);
+  animation: rise var(--duration-slow) var(--ease-out) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+.fade-in {
+  opacity: 0;
+  animation: fade 700ms var(--ease-out) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes rise {
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The hero trace: a hairline that draws itself, carrying a signal dot */
+.trace-line {
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: draw 1400ms var(--ease-in-out) 700ms forwards;
+}
+.trace-dot {
+  left: 0;
+  animation: travel 1400ms var(--ease-in-out) 700ms forwards;
+  opacity: 0;
+}
+@keyframes draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes travel {
+  0% {
+    left: 0;
+    opacity: 1;
+  }
+  90% {
+    left: 100%;
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Media settle used on project visuals when they scroll into view. The
+   resting state is fully visible: the motion is a short lift into place,
+   so nothing is hidden from a reader who never scrolls or runs no script. */
+.reveal {
+  transform: translateY(28px) scale(0.985);
+  transform-origin: 50% 0;
+  transition: transform 1100ms var(--ease-out);
+}
+.reveal[data-shown="true"] {
+  transform: none;
+}
+
+.blink {
+  animation: blink 2.4s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+
+/* Headings that rise into view. Hidden only once scripts have run (html.js),
+   so the page reads fully without JavaScript. */
+.js .text-reveal .text-reveal-inner {
+  display: block;
+  transform: translateY(105%);
+  transition: transform 1100ms var(--ease-out);
+}
+.js .text-reveal[data-shown="true"] .text-reveal-inner {
+  transform: none;
+}
+
+/* Expandable panel: animates grid rows from 0fr to 1fr, so height is never
+   measured in script. */
+.expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 700ms var(--ease-out),
+    opacity 500ms var(--ease-out);
+}
+.expand > * {
+  min-height: 0;
+}
+.expand-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+/* Cursor: a spark on the pointer and a ring that trails it */
+.has-cursor,
+.has-cursor * {
+  cursor: none !important;
+}
+.has-cursor input,
+.has-cursor textarea {
+  cursor: text !important;
+}
+.cursor-dot,
+.cursor-ring {
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 90;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 300ms var(--ease-out);
+}
+[data-cursor-visible="on"] .cursor-dot,
+[data-cursor-visible="on"] .cursor-ring {
+  opacity: 1;
+}
+.cursor-dot svg {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  fill: var(--color-paper);
+  transition:
+    scale 300ms var(--ease-out),
+    rotate 500ms var(--ease-out),
+    fill 300ms var(--ease-out);
+}
+.cursor-dot[data-state="hover"] svg {
+  scale: 0.75;
+  rotate: 45deg;
+  fill: var(--color-signal);
+}
+.cursor-dot[data-state="text"] svg {
+  scale: 0;
+}
+.cursor-ring-circle {
+  position: absolute;
+  left: -17px;
+  top: -17px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgb(236 231 221 / 0.28);
+  transition:
+    scale 450ms var(--ease-out),
+    border-color 300ms var(--ease-out),
+    opacity 300ms var(--ease-out);
+}
+.cursor-ring[data-state="hover"] .cursor-ring-circle {
+  scale: 1.55;
+  border-color: rgb(233 180 76 / 0.65);
+}
+.cursor-ring[data-state="text"] .cursor-ring-circle {
+  opacity: 0;
+}
+.cursor-ring[data-down="true"] .cursor-ring-circle {
+  scale: 1.2;
+}
+.cursor-label {
+  position: absolute;
+  left: 34px;
+  top: -6px;
+  white-space: nowrap;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  opacity: 0;
+  translate: -6px 0;
+  transition:
+    opacity 300ms var(--ease-out),
+    translate 400ms var(--ease-out);
+}
+.cursor-ring[data-label="true"] .cursor-label {
+  opacity: 1;
+  translate: 0 0;
+}
+[data-magnetic] {
+  transition: translate 450ms var(--ease-out);
+}
+
+/* Scroll cue in the hero: a hairline with a light travelling down it */
+.scroll-cue {
+  position: relative;
+  overflow: hidden;
+}
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40%;
+  background: var(--color-paper);
+  animation: cue 2.2s var(--ease-in-out) infinite;
+}
+@keyframes cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(250%);
+  }
+}
+
+/* Slow marquee for the hero discipline strip */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Sky: stars, constellations, labels
+   ------------------------------------------------------------------------- */
+.sky-layer {
+  will-change: transform;
+}
+.sky-star {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  transform: translate(-50%, -50%) rotate(var(--rot));
+  opacity: 0;
+  transition:
+    opacity 1800ms var(--ease-out),
+    scale 900ms var(--ease-out);
+}
+.sky[data-on="true"] .sky-star {
+  opacity: var(--o);
+}
+.sky-star svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sky-star-drift,
+.sky-star-spin {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Scroll velocity stretches the light a little, like a long exposure */
+.sky-star-drift {
+  animation: drift var(--drift) ease-in-out var(--delay) infinite alternate;
+}
+.sky-star[data-spin="true"] .sky-star-spin {
+  animation: spin var(--spin) linear var(--delay) infinite var(--dir);
+}
+.sky-star[data-twinkle="true"] .sky-star-spin {
+  animation: twinkle calc(var(--drift) / 4) ease-in-out var(--delay) infinite;
+}
+@keyframes drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(calc(8% + 3px), calc(-5% - 4px));
+  }
+  100% {
+    transform: translate(calc(-6% - 2px), calc(6% + 3px));
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  45% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.sky-edge {
+  stroke: var(--color-paper);
+  stroke-opacity: 0.32;
+  stroke-width: 0.35;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1200ms var(--ease-in-out);
+}
+.sky-figure[data-on="true"] .sky-edge {
+  stroke-dashoffset: 0;
+}
+.sky-node {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  transition:
+    transform 700ms var(--ease-out),
+    opacity 700ms var(--ease-out);
+}
+.sky-node[data-lead="true"] {
+  width: 15px;
+  height: 15px;
+}
+.sky-node svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sky-figure[data-on="true"] .sky-node {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.8;
+}
+.sky-name {
+  position: absolute;
+  translate: 0 14px;
+  white-space: nowrap;
+  font-size: 10.5px;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out) 400ms;
+}
+.sky-figure[data-on="true"] .sky-name {
+  opacity: 1;
+}
+.sky-label {
+  position: absolute;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-faint);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+
+/* Lines the cursor draws between itself and the stars */
+.sky-reach {
+  stroke: var(--color-paper);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 4;
+}
+.sky-reach-link {
+  stroke-dasharray: none;
+  stroke-width: 0.5;
+}
+.sky-star[data-react="true"] {
+  transition:
+    opacity 1800ms var(--ease-out),
+    translate 120ms linear,
+    scale 120ms linear;
+}
+/* Some stars leave for a while and come back */
+.sky-star[data-vanish="true"] .sky-star-drift {
+  animation:
+    drift var(--drift) ease-in-out var(--delay) infinite alternate,
+    vanish 23s ease-in-out var(--delay) infinite;
+}
+@keyframes vanish {
+  0%,
+  58%,
+  100% {
+    opacity: 1;
+  }
+  66%,
+  86% {
+    opacity: 0;
+  }
+}
+/* Some hop: still, then a quick jump to another spot */
+.sky-star[data-hop="true"] .sky-star-drift {
+  animation: hop 16s steps(1, end) var(--delay) infinite;
+}
+@keyframes hop {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(260%, -140%);
+  }
+  50% {
+    transform: translate(120%, 220%);
+  }
+  75% {
+    transform: translate(-180%, 90%);
+  }
+}
+.sky-star[data-pulse="true"] .sky-star-spin {
+  animation: pulse 7s ease-in-out var(--delay) infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
+
+/* Corner registration marks around a plate (project visuals, hero field) */
+.corners {
+  position: relative;
+}
+.corners > .corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--color-line-strong);
+  pointer-events: none;
+}
+.corner.tl {
+  top: -10px;
+  left: -10px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.corner.tr {
+  top: -10px;
+  right: -10px;
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+.corner.bl {
+  bottom: -10px;
+  left: -10px;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+.corner.br {
+  bottom: -10px;
+  right: -10px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+/* A shooting star, rarely: one streak every so often across the hero sky */
+.meteor {
+  position: absolute;
+  width: 140px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-paper));
+  opacity: 0;
+  transform: rotate(-24deg);
+  animation: meteor 19s linear 6s infinite;
+}
+@keyframes meteor {
+  0%,
+  93% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  94% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    translate: -420px 190px;
+  }
+}
+
+/* Orbit plate in the hero: circles turning on the compositor, squashed
+   into ellipses by their parent */
+.orbit-turn {
+  animation: spin 120s linear infinite;
+}
+.orbit-turn-slow {
+  animation: spin 240s linear infinite reverse;
+}
+/* Skies off screen hold still */
+.sky[data-visible="false"] .sky-star-drift,
+.sky[data-visible="false"] .sky-star-spin {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------------------
+   Scenes. Static rules first (the complete page), then the scroll-linked
+   choreography, which exists only when motion is welcome. Scenes receive
+   --p / --e / --pin / --px / --py from lib/motion.ts.
+   ------------------------------------------------------------------------- */
+.chapter-num,
+.prologue-num {
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(236 231 221 / 0.1);
+  font-variant-numeric: tabular-nums;
+}
+.work-meta {
+  opacity: 0;
+  translate: 0 -4px;
+  transition:
+    opacity 500ms var(--ease-out),
+    translate 600ms var(--ease-out);
+}
+.work-row[data-on="true"] .work-meta {
+  opacity: 1;
+  translate: 0 0;
+}
+.work-name,
+.work-num {
+  transition:
+    translate 700ms var(--ease-out),
+    color 400ms var(--ease-out);
+}
+.work-row[data-on="true"] .work-num {
+  color: var(--color-signal);
+}
+.work-period {
+  transition: opacity 400ms var(--ease-out);
+}
+@media (min-width: 768px) {
+  .work-row[data-on="true"] .work-name {
+    translate: 22px 0;
+  }
+  .work-row[data-on="true"] .work-period {
+    opacity: 0;
+  }
+}
+.work .sky-star {
+  transition:
+    opacity 1800ms var(--ease-out),
+    scale 900ms var(--ease-out);
+}
+.work[data-hover="true"] .sky-star {
+  scale: 1.35;
+}
+.work .sky-figure {
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Opening: lines lean with the pointer, then part ways as the page scrolls */
+  .hero [data-scroll] {
+    --x: clamp(0, calc((var(--p) - 0.5) * 2.4), 1);
+  }
+  .hero-line {
+    translate: calc(var(--px, 0) * var(--f) * -18px + var(--x) * var(--dx)) calc(var(--py, 0) * var(--f) * -8px);
+  }
+  .hero-title {
+    transform-origin: 0 100%;
+    scale: calc(1 - var(--x) * 0.06);
+    opacity: calc(1 - var(--x) * 0.8);
+  }
+  .hero-meta {
+    translate: calc(var(--px, 0) * 10px) calc(var(--py, 0) * 6px - var(--x) * 40px);
+  }
+  .hero-orbits {
+    rotate: calc(var(--x) * -28deg + var(--px, 0) * 3deg);
+    translate: calc(var(--px, 0) * -14px) calc(var(--x) * 14vh + var(--py, 0) * -10px);
+  }
+  .hero-foot {
+    translate: 0 calc(var(--x) * -8vh);
+    opacity: calc(1 - var(--x) * 1.1);
+  }
+
+  /* Prologue: words light as the reading head passes; the numeral advances */
+  .prologue-num {
+    translate: calc(var(--pin, 0) * 10vw) 0;
+    scale: calc(0.86 + var(--pin, 0) * 0.22);
+    transform-origin: 0 100%;
+  }
+  .pw {
+    opacity: 0.14;
+    transition: opacity 600ms var(--ease-out);
+  }
+  .pw[data-lit="true"] {
+    opacity: 1;
+  }
+
+  /* Work: the two words of the heading slide past each other */
+  .work-title-1 {
+    translate: calc((0.5 - var(--p, 0.5)) * 12vw) 0;
+  }
+  .work-title-2 {
+    translate: calc((var(--p, 0.5) - 0.5) * 18vw) 0;
+  }
+
+  /* Chapters: the numeral rises at its own depth, the title arrives from the
+     side, and the plate comes up out of the page */
+  .chapter-num,
+  .chapter-title {
+    --k: min(1, calc(var(--e) * 1.8));
+  }
+  .chapter-num {
+    translate: 0 calc((var(--p, 0.5) - 0.5) * -26vh);
+  }
+  .chapter-title {
+    translate: calc((1 - var(--k)) * var(--dir, -1) * 14vw) 0;
+    opacity: calc(0.15 + var(--k) * 0.85);
+  }
+  .plate {
+    --k: min(1, calc(var(--e, 1) * 1.9));
+    transform-origin: 50% 0;
+    scale: calc(0.9 + 0.1 * var(--k));
+    translate: 0 calc((1 - var(--k)) * 10vh);
+    rotate: calc((1 - var(--k)) * var(--dir, -1) * -1.6deg);
+  }
+
+  .about-statement {
+    translate: calc((1 - min(1, calc(var(--e, 1) * 1.4))) * -8vw) 0;
+  }
+  .contact-title {
+    transform-origin: 0 50%;
+    scale: calc(0.82 + 0.18 * min(1, calc(var(--e, 1) * 1.3)));
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Project worlds (components/scenes). State changes only at step
+   boundaries; transitions do the moving.
+   ------------------------------------------------------------------------- */
+.edge-line {
+  fill: none;
+  stroke: var(--color-paper);
+  stroke-opacity: 0.38;
+  stroke-width: 1.3;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition:
+    stroke-dashoffset 1200ms var(--ease-in-out) var(--delay, 0ms),
+    stroke 500ms var(--ease-out),
+    stroke-opacity 500ms var(--ease-out);
+}
+.edge[data-on="true"] .edge-line {
+  stroke-dashoffset: 0;
+}
+.edge-dashed {
+  stroke-dasharray: 0.006 0.01;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out) var(--delay, 0ms);
+}
+.edge[data-on="true"] .edge-dashed {
+  opacity: 1;
+}
+.edge[data-active="true"] .edge-line {
+  stroke: var(--color-signal);
+  stroke-opacity: 0.85;
+}
+.edge-particle {
+  fill: none;
+  stroke: var(--color-signal);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 0.001 0.999;
+  animation: particle var(--speed, 2.4s) linear infinite;
+}
+.edge-particle-2 {
+  animation-delay: calc(var(--speed, 2.4s) / -2);
+  stroke: var(--color-paper);
+  stroke-width: 3;
+}
+@keyframes particle {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.node {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out) var(--delay, 0ms);
+}
+.node[data-on="true"] {
+  opacity: 1;
+}
+.node[data-on="true"].node-dim {
+  opacity: 0.4;
+}
+.node-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  translate: -50% -50%;
+  scale: 0.4;
+  transition:
+    scale 700ms var(--ease-out),
+    background-color 400ms var(--ease-out),
+    border-color 400ms var(--ease-out),
+    box-shadow 400ms var(--ease-out);
+}
+.node[data-on="true"] .node-mark {
+  scale: 1;
+}
+.node[data-active="true"] .node-mark {
+  scale: 1.45;
+}
+.node-dot {
+  border-radius: 999px;
+  background: var(--color-paper);
+}
+.node-ring {
+  border-radius: 999px;
+  border: 1px solid var(--color-paper);
+  background: var(--color-ink);
+}
+.node-square {
+  border: 1px solid var(--color-paper);
+  background: var(--color-ink);
+}
+.node-diamond {
+  border: 1px solid var(--color-paper);
+  background: var(--color-ink);
+  rotate: 45deg;
+}
+.node-none {
+  display: none;
+}
+.node-spark {
+  width: 18px;
+  height: 18px;
+}
+.node-lg .node-spark {
+  width: 30px;
+  height: 30px;
+}
+.node-spark svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--color-paper);
+  transition: fill 400ms var(--ease-out);
+}
+.node[data-active="true"] .node-dot,
+.node[data-active="true"] .node-ring,
+.node[data-active="true"] .node-square,
+.node[data-active="true"] .node-diamond {
+  border-color: var(--color-signal);
+  box-shadow: 0 0 14px 1px rgb(233 180 76 / 0.45);
+}
+.node[data-active="true"] .node-dot {
+  background: var(--color-signal);
+}
+.node[data-active="true"] .node-spark svg {
+  fill: var(--color-signal);
+}
+.node-label {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 11.5px;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+.node-label > :last-child:not(:first-child) {
+  font-size: 10.5px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    opacity 500ms var(--ease-out),
+    max-height 500ms var(--ease-out);
+}
+.node[data-active="true"] .node-label > :last-child:not(:first-child) {
+  max-height: 2em;
+  opacity: 1;
+}
+.node[data-side="right"] .node-label {
+  left: 16px;
+  top: 0;
+  translate: 0 -50%;
+}
+.node[data-side="left"] .node-label {
+  right: 16px;
+  top: 0;
+  translate: 0 -50%;
+  text-align: right;
+}
+.node[data-side="top"] .node-label {
+  bottom: 14px;
+  left: 0;
+  translate: -50% 0;
+  text-align: center;
+}
+.node[data-side="bottom"] .node-label {
+  top: 14px;
+  left: 0;
+  translate: -50% 0;
+  text-align: center;
+}
+.world-tag {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  opacity: 0;
+  translate: 0 4px;
+  transition:
+    opacity 600ms var(--ease-out),
+    translate 700ms var(--ease-out);
+}
+.world-tag[data-on="true"] {
+  opacity: 1;
+  translate: 0 0;
+}
+@media (max-width: 767px) {
+  .node-label {
+    font-size: 9px;
+  }
+  .node-label > :last-child:not(:first-child),
+  .world-tag {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .node-spark {
+    width: 13px;
+    height: 13px;
+  }
+  .node-lg .node-spark {
+    width: 20px;
+    height: 20px;
+  }
+  .node-mark {
+    width: 7px;
+    height: 7px;
+  }
+}
+
+/* Diamond Edge: wireframe that fills, then the site emerges */
+.wf-fill {
+  fill: var(--color-paper);
+  fill-opacity: 0;
+  transition: fill-opacity 900ms var(--ease-out);
+}
+.wf-block[data-fill="true"] .wf-fill {
+  fill-opacity: 0.05;
+}
+.wf-block[data-done="true"] .edge-line {
+  stroke-opacity: 0.18;
+}
+.world-emerge {
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+  transition:
+    clip-path 1600ms var(--ease-in-out),
+    opacity 900ms var(--ease-out);
+}
+.world-emerge[data-on="true"] {
+  opacity: 0.92;
+  clip-path: inset(0 0 0 0);
+}
+
+/* Talent AI: people */
+.person {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  transition:
+    translate 1200ms var(--ease-in-out),
+    opacity 700ms var(--ease-out),
+    background-color 400ms var(--ease-out);
+}
+.person-dup {
+  background: var(--color-signal);
+  box-shadow: 0 0 12px 2px rgb(233 180 76 / 0.5);
+}
+
+/* Orcus: tools and log */
+.orbit-line {
+  fill: none;
+  stroke: var(--color-paper);
+  stroke-opacity: 0;
+  stroke-dasharray: 2 7;
+  transition: stroke-opacity 1200ms var(--ease-out);
+}
+.orbit-line[data-on="true"] {
+  stroke-opacity: 0.14;
+}
+.tool {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 999px;
+  border: 1px solid rgb(236 231 221 / 0.45);
+  opacity: 0;
+  scale: 0.2;
+  transition:
+    opacity 500ms var(--ease-out),
+    scale 600ms var(--ease-out),
+    background-color 400ms var(--ease-out),
+    border-color 400ms var(--ease-out);
+}
+.tool[data-on="true"] {
+  opacity: 1;
+  scale: 1;
+}
+.tool[data-lit="true"] {
+  background: var(--color-signal);
+  border-color: var(--color-signal);
+}
+.log-tick {
+  position: absolute;
+  width: 1px;
+  height: 12px;
+  margin: -6px 0 0 0;
+  background: rgb(236 231 221 / 0.55);
+  scale: 1 0;
+  transition: scale 400ms var(--ease-out);
+}
+.log-tick[data-on="true"] {
+  scale: 1 1;
+}
+
+/* Entugo: language and ground */
+.graticule path {
+  fill: none;
+  stroke: var(--color-paper);
+  stroke-opacity: 0.05;
+}
+.graticule {
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-out);
+}
+.graticule[data-on="true"] {
+  opacity: 1;
+}
+.lang-mark {
+  position: absolute;
+  font-size: 6.4cqw;
+  font-weight: 560;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(236 231 221 / 0.35);
+  opacity: 0;
+  translate: -8px 0;
+  transition:
+    opacity 900ms var(--ease-out),
+    translate 1100ms var(--ease-out);
+}
+.lang-mark[data-on="true"] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* The scene frame: title, intro, stage, narration */
+.scene-step {
+  opacity: 0;
+  translate: 0 10px;
+  pointer-events: none;
+  transition:
+    opacity 500ms var(--ease-out),
+    translate 700ms var(--ease-out);
+}
+[data-scroll-dir="up"] .scene-step {
+  translate: 0 -10px;
+}
+.scene-step[data-on="true"] {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 120ms;
+}
+.orbit-text {
+  animation: spin 90s linear infinite;
+}
+.scene-title {
+  transform-origin: 0 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* --g runs from -1 (scene entering) through 0 (pinned) to --units (done) */
+  .scene-title,
+  .scene-intro,
+  .scene-reveal,
+  .scene-stage,
+  .scene-panel,
+  .scene-num,
+  .scene-signal {
+    --g: calc(var(--e) - 1 + var(--pin) * var(--units));
+  }
+  .scene-title {
+    --k: clamp(0, calc((var(--g) - 0.7) * 2.2), 1);
+    --ki: var(--k);
+    --ei: min(1, calc(var(--e) * 1.3));
+    translate: calc(var(--px) * -10px) calc(var(--k) * -10vh + var(--py) * -6px);
+    scale: calc(1 - var(--k) * 0.62);
+  }
+  .scene-word {
+    translate: calc((1 - var(--ei)) * (8vw + var(--w) * 6vw) * var(--dir, -1) + var(--ki) * var(--w) * 1.4vw) 0;
+  }
+  .scene-intro {
+    opacity: clamp(0, calc((1.15 - var(--g)) * 3), 1);
+  }
+  .scene-reveal {
+    --r: clamp(0, calc((var(--g) + 0.6 - var(--t)) * 4), 1);
+    opacity: var(--r);
+    translate: 0 calc((1 - var(--r)) * 14px);
+  }
+  .scene-stage {
+    --st: clamp(0, calc((var(--g) - 0.75) * 2.5), 1);
+    opacity: var(--st);
+    scale: calc(0.84 + 0.16 * var(--st));
+    translate: calc(var(--px) * -8px) calc(var(--py) * -5px + (1 - var(--st)) * 6vh);
+  }
+  .scene-panel {
+    opacity: clamp(0, calc((var(--g) - 0.8) * 2.5), 1);
+  }
+  .scene-num {
+    translate: calc(var(--px) * 14px) calc(var(--pin) * -26vh + var(--py) * 8px);
+  }
+  .scene-signal {
+    opacity: clamp(0, calc((var(--g) + 0.35) * 3), 1);
+  }
+}
+@media (max-width: 767px) {
+  .scene-panel .scene-step .text-small {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The guiding light and the act progress
+   ------------------------------------------------------------------------- */
+.guide {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  opacity: 0;
+  animation: guide-in 900ms var(--ease-out) 2050ms forwards;
+  transition: opacity 700ms var(--ease-out);
+}
+@keyframes guide-in {
+  to {
+    opacity: 1;
+  }
+}
+.guide-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  transition:
+    scale 700ms var(--ease-out),
+    rotate 700ms var(--ease-out);
+}
+.guide-spark,
+.guide-marker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transition: opacity 500ms var(--ease-out);
+}
+.guide-spark {
+  fill: var(--color-signal);
+  filter: drop-shadow(0 0 6px rgb(233 180 76 / 0.7));
+}
+.guide-marker {
+  fill: none;
+  stroke: var(--color-signal);
+  stroke-width: 1.2;
+  opacity: 0;
+}
+.guide[data-mode="marker"] .guide-spark {
+  opacity: 0;
+}
+.guide[data-mode="marker"] .guide-marker {
+  opacity: 1;
+}
+.guide[data-mode="marker"] .guide-body {
+  scale: 1.5;
+  rotate: 45deg;
+}
+.guide[data-mode="node"] .guide-body {
+  scale: 0.75;
+}
+.guide[data-mode="orbit"] .guide-body {
+  scale: 0.6;
+  animation: guide-orbit 7s linear infinite;
+}
+@keyframes guide-orbit {
+  from {
+    transform: rotate(0deg) translateX(22px) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(22px) rotate(-360deg);
+  }
+}
+.guide[data-mode="land"] .guide-body {
+  scale: 0.5;
+}
+[data-guide-landed="true"] .guide,
+[data-guide-landed="true"] .guide-mote {
+  opacity: 0 !important;
+}
+.guide-label {
+  position: absolute;
+  left: 18px;
+  top: -7px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-signal);
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity 600ms var(--ease-out),
+    translate 700ms var(--ease-out);
+}
+.guide[data-flip="true"] .guide-label {
+  left: auto;
+  right: 18px;
+  translate: 4px 0;
+}
+.guide-label[data-on="true"] {
+  opacity: 0.9;
+  translate: 0 0;
+}
+.guide-mote {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 999px;
+  background: var(--color-signal);
+  will-change: transform;
+}
+.landing-dot {
+  transition:
+    color 900ms var(--ease-out),
+    text-shadow 900ms var(--ease-out);
+}
+[data-guide-landed="true"] .landing-dot {
+  color: var(--color-signal);
+  text-shadow: 0 0 24px rgb(233 180 76 / 0.5);
+}
+.progress-name {
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out);
+}
+.progress-name[data-on="true"],
+.progress:hover .progress-name {
+  opacity: 1;
+}
+.progress-orbit {
+  animation: spin 9s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Small details: letters, hints, hovers
+   ------------------------------------------------------------------------- */
+.hero-letter {
+  display: inline-block;
+}
+.work-num-hint {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  white-space: nowrap;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+  opacity: 0;
+  translate: 0 -3px;
+  pointer-events: none;
+  transition:
+    opacity 400ms var(--ease-out),
+    translate 500ms var(--ease-out);
+}
+.work-num:hover .work-num-hint {
+  opacity: 1;
+  translate: 0 0;
+}
+/* Navigation letters open up a little under the cursor */
+.nav-link {
+  transition:
+    letter-spacing 500ms var(--ease-out),
+    color 200ms var(--ease-out);
+}
+.nav-link:hover {
+  letter-spacing: 0.22em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Letters drift apart as the opening gives way */
+  .hero-line {
+    --xi: var(--x);
+  }
+  .hero-letter {
+    translate: calc(var(--xi) * var(--c) * 9vw) calc(var(--xi) * var(--c2) * 2.2vh);
+  }
+  /* The prologue sentence leaves by growing past the viewer */
+  .prologue-text {
+    --out: clamp(0, calc((var(--pin) - 0.86) * 7), 1);
+    scale: calc(1 + var(--out) * 0.35);
+    opacity: calc(1 - var(--out));
+    filter: blur(calc(var(--out) * 6px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .text-reveal .text-reveal-inner {
+    transform: none;
+    transition: none;
+  }
+  .scroll-cue::after,
+  .marquee,
+  .sky-star-drift,
+  .sky-star-spin,
+  .sky-star[data-vanish="true"] .sky-star-drift,
+  .sky-star[data-hop="true"] .sky-star-drift,
+  .sky-star[data-pulse="true"] .sky-star-spin,
+  .progress-orbit,
+  .guide[data-mode="orbit"] .guide-body,
+  .meteor,
+  .edge-particle,
+  .orbit-text,
+  .orbit-turn,
+  .orbit-turn-slow {
+    animation: none !important;
+  }
+  .meteor {
+    display: none;
+  }
+  .guide {
+    animation: none;
+    opacity: 1;
+  }
+  .guide-mote {
+    display: none;
+  }
+  .sky-star {
+    opacity: var(--o);
+  }
+  .sky .sky-edge {
+    stroke-dashoffset: 0;
+  }
+  .sky .sky-node {
+    opacity: 0.8;
+    transform: translate(-50%, -50%);
+  }
+  .sky .sky-name {
+    opacity: 1;
+  }
+  .rise,
+  .fade-in,
+  .trace-line {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+  .trace-dot {
+    animation: none;
+    opacity: 1;
+    left: 100%;
+  }
+  .reveal {
+    transform: none;
+    transition: none;
+  }
+  .blink {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Utility: hide scrollbars on horizontal rails without hiding the content */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hero accents: the middle word as an outline, the full stop as the light */
+.hero-line:nth-child(2) .hero-letter {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-paper);
+  transition: color 600ms var(--ease-out);
+}
+.hero-line:nth-child(2):hover .hero-letter {
+  color: var(--color-paper);
+}
+.hero-line:nth-child(3) .hero-letter:last-child {
+  color: var(--color-signal);
+  text-shadow: 0 0 28px rgb(233 180 76 / 0.55);
+}
+
+/* HUD tracking frames in the hero: corner brackets that drift and re-lock */
+.track {
+  position: absolute;
+  background:
+    linear-gradient(var(--color-faint), var(--color-faint)) top left / 10px 1px,
+    linear-gradient(var(--color-faint), var(--color-faint)) top left / 1px 10px,
+    linear-gradient(var(--color-faint), var(--color-faint)) top right / 10px 1px,
+    linear-gradient(var(--color-faint), var(--color-faint)) top right / 1px 10px,
+    linear-gradient(var(--color-faint), var(--color-faint)) bottom left / 10px 1px,
+    linear-gradient(var(--color-faint), var(--color-faint)) bottom left / 1px 10px,
+    linear-gradient(var(--color-faint), var(--color-faint)) bottom right / 10px 1px,
+    linear-gradient(var(--color-faint), var(--color-faint)) bottom right / 1px 10px;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  animation: track 11s var(--ease-in-out) infinite alternate;
+}
+.track::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -16px;
+  left: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--color-faint);
+  white-space: nowrap;
+}
+.track-slow { animation-duration: 17s; }
+.track-fast { animation-duration: 7s; animation-direction: alternate-reverse; }
+@keyframes track {
+  0%, 30% { transform: translate(0, 0) scale(1); }
+  45% { transform: translate(14px, -10px) scale(0.86); }
+  70%, 100% { transform: translate(-8px, 6px) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .track { animation: none; }
+}
+
+/* Entrance: halftone stars, the name around a turning engraved star */
+.ent-spin { animation: spin 220s linear infinite; }
+.ent-spin-rev { animation: spin 300s linear infinite reverse; }
+.ent-turn { animation: spin 70s linear infinite; }
+@media (prefers-reduced-motion: no-preference) {
+  .entrance [data-scroll] { --x: clamp(0, calc((var(--p) - 0.5) * 2.2), 1); }
+  .ent-far { translate: calc(var(--px) * -26px) calc(var(--py) * -18px + var(--x) * -22vh); }
+  .ent-near { translate: calc(var(--px) * 40px) calc(var(--py) * 28px + var(--x) * 18vh); }
+  .ent-name {
+    translate: calc(var(--px) * 10px) calc(var(--py) * 6px);
+    scale: calc(1 + var(--x) * 0.5);
+    opacity: calc(1 - var(--x) * 1.4);
+  }
+  .ent-object { rotate: calc(var(--px) * 8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ent-spin, .ent-spin-rev, .ent-turn { animation: none; }
+}
